@@ -1,0 +1,201 @@
+```{r}
+#Loading Dataset
+data("AirPassengers")
+```
+
+```{r}
+#View the dataset
+AirPassengers
+```
+```{r}
+#access any data from the dataset
+AirPassengers["1955"]
+```
+
+
+```{r}
+#type of the dataset
+class(AirPassengers)
+```
+
+```{r}
+#starting of the dataset
+start(AirPassengers)
+
+#end of the dataset
+end(AirPassengers)
+```
+
+```{r}
+#structrure of the dataset
+str(AirPassengers)
+```
+
+```{r}
+#Views the data in structured format
+View(AirPassengers)
+```
+
+```{r}
+#displays the Central Tendancy of Values
+summary(AirPassengers)
+```
+
+```{r}
+#Displays the position assigned to each values
+cycle(AirPassengers)
+```
+
+```{r}
+#It shows the frequency for each index, each row has 12 data points
+frequency(AirPassengers)
+```
+
+```{r}
+#shows the first 6 values in the DataSet
+head(AirPassengers)
+```
+
+```{r}
+#plot the graph to see the Trend
+#plot the abline to see the Mean Line over the trend
+#Abline - Absolute Line
+#lm = Linear Model
+#Plot time based on the time and passengers count
+plot(AirPassengers)
+abline(
+  reg = lm(AirPassengers~time(AirPassengers))
+)
+```
+
+```{r}
+#plot the box plot to see,  how values are distributed
+boxplot(AirPassengers~cycle(AirPassengers))
+```
+
+```{r}
+#Now the model is not stationary but has a trend - Upward Tren (Values keep on increaing year by year)
+#so make the model as stationary
+# mean, variance and co variance should be constant to make the values stationary
+
+plot(log(AirPassengers))
+abline(
+  reg = lm(log(AirPassengers)~time(AirPassengers))
+)
+
+#Now the variance and co variance of the model is approximately constant
+```
+
+```{r}
+
+#to make the mean value constant -> take differentiation of the log value
+
+plot(diff(log(AirPassengers)))
+abline(
+  reg = lm(diff(log(AirPassengers))~time(diff(log(AirPassengers))))
+)
+
+#now the mean value is constant and the values are stationary
+```
+
+```{r}
+#so we can start using the time series modeling
+
+#ARIMA - Auto Regressive Integraed Moving Average
+
+# AR I MA
+# p  d q
+
+#p = the number of lag observations in the autoregressive part.
+#d = the number of differencing operations to make the series stationary.
+#q = the number of lagged forecast errors in the moving average part.
+
+#Arima model needs p,d,q values to get model predicted
+
+#so we need to find the p,d,q values
+
+#to find that values we need to use acf (Auto correlation function)
+
+acf(diff(log(AirPassengers)))
+# from this graph we identify the q value, here q=1, (last upward line before the first downward line)
+
+```
+
+```{r}
+#to find the value of the p, we use pacf function (Partial Auto correlation function)
+
+pacf(diff(log(AirPassengers)))
+
+# from this graph we identify the p value, here p=0, (last upward line before the first downward line)
+```
+```{r}
+#and differentiation value is 1, because we got the data stationary after doing the first differentitaion 
+#itself, its the value until we get the data stationary
+```
+
+```{r}
+#training ARIMA model
+#Why ARIMA
+#Simple and powerful prediction
+#Works well on univariate data
+#Stationary
+#flexibility
+#Predictive power
+
+fit = arima(log(AirPassengers), c(0,1,1), seasonal = list(order=c(0,1,1), period=12))
+```
+
+```{r}
+#prediction
+pred = predict(fit, n.ahead = 5*12)
+
+head(pred)
+
+#Gives the prediction and Standard Error values
+#Prediction = The predicted values based on the Model data
+# SE = This indicates the error in the predicted data, the error is very smaller -> Good Prediction
+#Error is higher ->uncertain in prediction
+
+#Using these, you can calculate prediction intervals for future values, for example:
+
+#Lower bound of the prediction interval = pred - 1.96 * se
+#Upper bound of the prediction interval = pred + 1.96 * se
+
+#This allows you to quantify the range of values in which you expect the actual future values to lie with a certain level of confidence (usually 95%).
+```
+
+```{r}
+#Now the predicted values are in log form
+# to change the log into decimal form, we need to do -> e^Pred
+# where e=2.718
+
+pred1 = 2.718^pred$pred
+```
+
+```{r}
+pred1
+# we got the prediction values
+```
+
+```{r}
+#we can plot the prediction values
+#log="y" -> take logirithm of the y values
+#lty - > line type -> 1=fixed line, 3=dotted line for x axis and y axis
+
+ts.plot(AirPassengers, pred1, log="y", lty=c(1,3))
+```
+
+```{r}
+head(pred1)
+```
+
+```{r}
+pred1
+```
+```{r}
+#rounding the values
+
+pred1 = round(pred1, digits = 0)
+pred1
+```
+
